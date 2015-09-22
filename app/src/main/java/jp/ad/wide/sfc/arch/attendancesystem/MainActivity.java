@@ -22,11 +22,14 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     protected NfcAdapter mNfcAdapter;
@@ -91,9 +94,8 @@ public class MainActivity extends AppCompatActivity {
             String res = null;
             try {
                 res = getStudentNumber(nfcF, IDm);
-                request(res);
-                soundPool.play(sucSoundId, 1.0f, 1.0f, 0, 0, 1.0f);
                 Log.d("nfc", res);
+                request(res);
             } catch (IOException e) {
                 soundPool.stop(sucSoundId);
                 soundPool.play(errSoundId, 1.0f, 1.0f, 0, 0, 1.0f);
@@ -105,14 +107,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void request(String studentNumber) {
-        String URL_API = "http://hoge.com/fuga?id=" + studentNumber;
-        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.POST, URL_API, null,
+        String URL_API = "http://192.168.1.72:3000/api/v1/attendances";
+        JSONObject json = new JSONObject();
+        try {
+            json.put("access_token", "86a1ceba597a80b2369bff0c60ad10b8597a139360f11eb5048f165e0d734c9a");
+            json.put("student_id", studentNumber);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.POST, URL_API, json,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
-                            String name = response.getString("name");
-
+                            JSONObject user = response.getJSONObject("user");
+                            Log.d("json", user.toString());
+                            soundPool.play(sucSoundId, 1.0f, 1.0f, 0, 0, 1.0f);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
