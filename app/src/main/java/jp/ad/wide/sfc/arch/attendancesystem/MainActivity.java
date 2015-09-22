@@ -16,6 +16,15 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
@@ -24,11 +33,14 @@ public class MainActivity extends AppCompatActivity {
     private SoundPool soundPool;
     private int sucSoundId, errSoundId;
     private AudioManager audioManager;
+    private static final Object TAG_REQUEST_QUEUE = MainActivity.class.getName();
+    String tag_json_obj = "json_obj_req";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
 
@@ -79,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
             String res = null;
             try {
                 res = getStudentNumber(nfcF, IDm);
+                request(res);
                 soundPool.play(sucSoundId, 1.0f, 1.0f, 0, 0, 1.0f);
                 Log.d("nfc", res);
             } catch (IOException e) {
@@ -89,6 +102,30 @@ public class MainActivity extends AppCompatActivity {
 
             Log.d("nfc", res);
         }
+    }
+
+    private void request(String studentNumber) {
+        String URL_API = "http://hoge.com/fuga?id=" + studentNumber;
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.POST, URL_API, null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            String name = response.getString("name");
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                },
+        new Response.ErrorListener() {
+            @Override
+        public void onErrorResponse(VolleyError error) {
+               error.printStackTrace();
+            }
+        });
+
+        AppController.getInstance().addToRequestQueue(jsonObjReq, tag_json_obj);
     }
 
     String getStudentNumber(NfcF nfcF, byte[] IDm) throws IOException {
