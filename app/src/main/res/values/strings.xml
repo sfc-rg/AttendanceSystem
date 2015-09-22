@@ -3,4 +3,6 @@
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="error_nfc_nosupport">NFC未対応機種です</string>
+    <string name="error_nfc_disable">NFCが無効です</string>
 </resources>
