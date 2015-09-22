@@ -1,6 +1,10 @@
 package jp.ad.wide.sfc.arch.attendancesystem;
 
+import android.content.Context;
 import android.content.Intent;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.media.SoundPool;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.NfcF;
@@ -17,6 +21,9 @@ import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
     protected NfcAdapter mNfcAdapter;
+    private SoundPool soundPool;
+    private int sucSoundId, errSoundId;
+    private AudioManager audioManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +60,13 @@ public class MainActivity extends AppCompatActivity {
         }
         mNfcAdapter.enableReaderMode(this, new CustomReaderCallback(), NfcAdapter.FLAG_READER_NFC_F | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK, null);
 
+        audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+        audioManager.setStreamMute(AudioManager.STREAM_SYSTEM, true);
+
+        AudioAttributes attributes = new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build();
+        soundPool = new SoundPool.Builder().setAudioAttributes(attributes).setMaxStreams(5).build();
+        sucSoundId = soundPool.load(this, R.raw.suc, 1);
+        errSoundId = soundPool.load(this, R.raw.err, 1);
     }
 
     private class CustomReaderCallback implements NfcAdapter.ReaderCallback {
@@ -65,8 +79,11 @@ public class MainActivity extends AppCompatActivity {
             String res = null;
             try {
                 res = getStudentNumber(nfcF, IDm);
+                soundPool.play(sucSoundId, 1.0f, 1.0f, 0, 0, 1.0f);
                 Log.d("nfc", res);
             } catch (IOException e) {
+                soundPool.stop(sucSoundId);
+                soundPool.play(errSoundId, 1.0f, 1.0f, 0, 0, 1.0f);
                 e.printStackTrace();
             }
 
@@ -158,5 +175,13 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onPause() {
+        audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+        soundPool.release();
+        audioManager.setStreamMute(AudioManager.STREAM_SYSTEM, false);
+        super.onPause();
     }
 }
