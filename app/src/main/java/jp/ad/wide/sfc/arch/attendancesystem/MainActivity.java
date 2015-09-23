@@ -17,6 +17,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.DefaultRetryPolicy;
@@ -32,6 +33,7 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -154,7 +156,10 @@ public class MainActivity extends AppCompatActivity {
                     public void onResponse(JSONObject response) {
                         try {
                             JSONObject user = response.getJSONObject("user");
-                            Log.d("request", user.toString());
+                            String name = user.getString("name");
+                            String nickname = user.getString("nickname");
+                            String iconUrl = user.getString("icon_url");
+                            changeDisplay(name, nickname, iconUrl);
                             soundPool.play(sucSoundId, 1.0f, 1.0f, 0, 0, 1.0f);
                         } catch (JSONException e) {
                             Log.e("request", response.toString());
@@ -170,6 +175,15 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
         AppController.getInstance().addToRequestQueue(jsonObjReq, tag_json_obj);
+    }
+
+    void changeDisplay(String name, String loginName, String url) {
+        url = url.replaceAll("\\\\", "");
+        TextView nameTextView = (TextView)this.findViewById(R.id.name);
+        TextView loginNameTextView = (TextView)this.findViewById(R.id.login_name);
+        //TODO 画像を取得する
+        nameTextView.setText(name);
+        loginNameTextView.setText(loginName);
     }
 
     String getStudentNumber(NfcF nfcF, byte[] IDm) throws IOException {
