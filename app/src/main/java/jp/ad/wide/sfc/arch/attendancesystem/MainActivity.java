@@ -38,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private AudioManager audioManager;
     private static final Object TAG_REQUEST_QUEUE = MainActivity.class.getName();
     String tag_json_obj = "json_obj_req";
+    String accessToken;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,10 +108,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void request(String studentNumber) {
-        String URL_API = "http://192.168.1.72:3000/api/v1/attendances";
+        String URL_API = "http://portal.gw.sfc.wide.ad.jp/api/v1/attendances";
+        //https にしたほうがいい
         JSONObject json = new JSONObject();
         try {
-            json.put("access_token", "86a1ceba597a80b2369bff0c60ad10b8597a139360f11eb5048f165e0d734c9a");
+            json.put("access_token", accessToken);
             json.put("student_id", studentNumber);
         } catch (JSONException e) {
             e.printStackTrace();
@@ -129,13 +131,12 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 },
-        new Response.ErrorListener() {
-            @Override
-        public void onErrorResponse(VolleyError error) {
-               error.printStackTrace();
-            }
-        });
-
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        error.printStackTrace();
+                    }
+                });
         AppController.getInstance().addToRequestQueue(jsonObjReq, tag_json_obj);
     }
 

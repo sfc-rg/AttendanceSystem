@@ -1,8 +1,5 @@
 package jp.ad.wide.sfc.arch.attendancesystem;
 
-/**
- * Created by masahikohara on 15/09/22.
- */
 import android.app.Application;
 import android.text.TextUtils;
 import com.android.volley.Request;
@@ -36,7 +33,6 @@ public class AppController extends Application {
         if (mRequestQueue == null) {
             mRequestQueue = Volley.newRequestQueue(getApplicationContext());
         }
-
         return mRequestQueue;
     }
 
