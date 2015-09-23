@@ -17,7 +17,10 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
+<<<<<<< HEAD
 import android.widget.TextView;
+=======
+>>>>>>> json
 import android.widget.Toast;
 
 import com.android.volley.DefaultRetryPolicy;
@@ -66,6 +69,21 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), getString(R.string.error_nfc_disable), Toast.LENGTH_LONG).show();
             //設定画面へ飛ばす
             startActivity(new Intent(Settings.ACTION_NFC_SETTINGS));
+        }
+
+        if (accessToken == null) {
+            final EditText editText = new EditText(MainActivity.this);
+            new AlertDialog
+                    .Builder(MainActivity.this)
+                    .setTitle("アクセストークン入力")
+                    .setView(editText)
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            accessToken = editText.getText().toString();
+                        }
+                    })
+                    .show();
         }
 
         if (accessToken == null) {
@@ -171,6 +189,8 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         VolleyError newError = new VolleyError(new String(error.networkResponse.data));
+                        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+                        alertDialogBuilder.setTitle("Error").setMessage(new String(error.networkResponse.data)).show();
                         Log.e("request", newError.toString());
                     }
                 });
