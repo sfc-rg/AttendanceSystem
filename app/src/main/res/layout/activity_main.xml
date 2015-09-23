@@ -7,12 +7,75 @@
     android:id="@+id/action_settings">
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="@string/copyright"
-        android:id="@+id/textView"
+        android:id="@+id/copyright"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentEnd="true"
+        android:textSize="20sp"
+        android:gravity="right" />
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/welcome_message"
+        android:id="@+id/welcome_message"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="false"
+        android:textSize="40sp"
+        android:layout_alignParentEnd="false"
+        android:gravity="center_horizontal" />
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/please_touch_message"
+        android:id="@+id/please_touch_message"
+        android:layout_below="@+id/welcome_message"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="100dp"
+        android:textSize="35sp"
+        android:gravity="center_horizontal" />
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:id="@+id/name"
+        android:layout_above="@+id/login_name"
+        android:layout_centerHorizontal="true"
+        android:textSize="40sp"
+        android:gravity="center_horizontal" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:id="@+id/login_name"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:textSize="50sp" />
+
+    <ImageView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/icon_image"
+        android:layout_below="@+id/login_name"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp" />
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:id="@+id/attendance_count"
+        android:layout_below="@+id/icon_image"
+        android:layout_alignParentEnd="true"
+        android:gravity="right"
+        android:textSize="24sp" />
 
 </RelativeLayout>

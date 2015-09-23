@@ -2,7 +2,10 @@
     <string name="app_name">AttendanceSystem</string>
 
     <string name="action_settings">Reset Access Token</string>
+    <string name="welcome_message">Welcome to RG class!</string>
     <string name="error_nfc_nosupport">NFC is not supported on this device.</string>
     <string name="error_nfc_disable">NFC is not available on this device.</string>
     <string name="copyright">Copyright &#169; 2015&#8211;2016 Arch All Rights Reserved.</string>
+    <string name="please_touch_message">Please touch your Student Card</string>
+
 </resources>
