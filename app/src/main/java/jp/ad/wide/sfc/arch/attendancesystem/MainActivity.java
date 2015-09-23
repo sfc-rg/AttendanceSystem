@@ -1,6 +1,8 @@
 package jp.ad.wide.sfc.arch.attendancesystem;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
@@ -14,6 +16,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -63,6 +66,21 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(Settings.ACTION_NFC_SETTINGS));
             return;
         }
+
+        if (accessToken == null) {
+            final EditText editText = new EditText(MainActivity.this);
+            new AlertDialog
+                    .Builder(MainActivity.this)
+                    .setTitle("アクセストークン入力")
+                    .setView(editText)
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            accessToken = editText.getText().toString();
+                        }
+                    })
+                    .show();
+        }
     }
 
     @Override
@@ -95,19 +113,17 @@ public class MainActivity extends AppCompatActivity {
             String res = null;
             try {
                 res = getStudentNumber(nfcF, IDm);
-                Log.d("nfc", res);
                 request(res);
             } catch (IOException e) {
                 soundPool.stop(sucSoundId);
                 soundPool.play(errSoundId, 1.0f, 1.0f, 0, 0, 1.0f);
                 e.printStackTrace();
             }
-
-            Log.d("nfc", res);
         }
     }
 
     private void request(String studentNumber) {
+        Log.d("request", "studentNumber: " + studentNumber);
         String URL_API = "http://portal.gw.sfc.wide.ad.jp/api/v1/attendances";
         //https にしたほうがいい
         JSONObject json = new JSONObject();
@@ -124,9 +140,10 @@ public class MainActivity extends AppCompatActivity {
                     public void onResponse(JSONObject response) {
                         try {
                             JSONObject user = response.getJSONObject("user");
-                            Log.d("json", user.toString());
+                            Log.d("request", user.toString());
                             soundPool.play(sucSoundId, 1.0f, 1.0f, 0, 0, 1.0f);
                         } catch (JSONException e) {
+                            Log.e("request", response.toString());
                             e.printStackTrace();
                         }
                     }
@@ -134,7 +151,8 @@ public class MainActivity extends AppCompatActivity {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        error.printStackTrace();
+                        VolleyError newError = new VolleyError(new String(error.networkResponse.data));
+                        Log.e("request", newError.toString());
                     }
                 });
         AppController.getInstance().addToRequestQueue(jsonObjReq, tag_json_obj);
