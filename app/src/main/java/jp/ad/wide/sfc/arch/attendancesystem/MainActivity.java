@@ -76,36 +76,6 @@ public class MainActivity extends AppCompatActivity {
                     })
                     .show();
         }
-
-        if (accessToken == null) {
-            final EditText editText = new EditText(MainActivity.this);
-            new AlertDialog
-                    .Builder(MainActivity.this)
-                    .setTitle("アクセストークン入力")
-                    .setView(editText)
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            accessToken = editText.getText().toString();
-                        }
-                    })
-                    .show();
-        }
-
-        if (accessToken == null) {
-            final EditText editText = new EditText(MainActivity.this);
-            new AlertDialog
-                    .Builder(MainActivity.this)
-                    .setTitle("アクセストークン入力")
-                    .setView(editText)
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            accessToken = editText.getText().toString();
-                        }
-                    })
-                    .show();
-        }
     }
 
     @Override
