@@ -1,6 +1,8 @@
 package jp.ad.wide.sfc.arch.attendancesystem;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
@@ -14,6 +16,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -38,13 +41,12 @@ public class MainActivity extends AppCompatActivity {
     private AudioManager audioManager;
     private static final Object TAG_REQUEST_QUEUE = MainActivity.class.getName();
     String tag_json_obj = "json_obj_req";
-    String accessToken;
+    String accessToken = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
 
@@ -61,7 +63,21 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), getString(R.string.error_nfc_disable), Toast.LENGTH_LONG).show();
             //設定画面へ飛ばす
             startActivity(new Intent(Settings.ACTION_NFC_SETTINGS));
-            return;
+        }
+
+        if (accessToken == null) {
+            final EditText editText = new EditText(MainActivity.this);
+            new AlertDialog
+                    .Builder(MainActivity.this)
+                    .setTitle("アクセストークン入力")
+                    .setView(editText)
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            accessToken = editText.getText().toString();
+                        }
+                    })
+                    .show();
         }
     }
 
@@ -220,6 +236,18 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            final EditText editText = new EditText(MainActivity.this);
+            new AlertDialog
+                    .Builder(MainActivity.this)
+                    .setTitle("アクセストークン入力")
+                    .setView(editText)
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            accessToken = editText.getText().toString();
+                        }
+                    })
+                    .show();
             return true;
         }
 
