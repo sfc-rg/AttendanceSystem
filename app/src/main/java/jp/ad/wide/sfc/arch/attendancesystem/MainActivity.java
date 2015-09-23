@@ -152,6 +152,8 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         VolleyError newError = new VolleyError(new String(error.networkResponse.data));
+                        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+                        alertDialogBuilder.setTitle("Error").setMessage(new String(error.networkResponse.data)).show();
                         Log.e("request", newError.toString());
                     }
                 });
