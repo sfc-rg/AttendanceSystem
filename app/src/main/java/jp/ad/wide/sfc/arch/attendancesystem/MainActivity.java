@@ -54,26 +54,13 @@ public class MainActivity
             startActivity(new Intent(Settings.ACTION_NFC_SETTINGS));
         }
 
-        final EditText editText = new EditText(MainActivity.this);
-        new AlertDialog
-                .Builder(MainActivity.this)
-                .setTitle("アクセストークン入力")
-                .setView(editText)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        String accessToken = editText.getText().toString();
-                        mPortalClient = new PortalClient(MainActivity.this, MainActivity.this, accessToken);
-                    }
-                })
-                .show();
+        inputAccessToken();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         mStudentReader.enable();
-        //noinspection deprecation
         mAudioManager.setStreamMute(AudioManager.STREAM_SYSTEM, true);
 
         AudioAttributes attributes = new AudioAttributes.Builder()
@@ -89,7 +76,6 @@ public class MainActivity
     public void onPause() {
         super.onPause();
         mStudentReader.disable();
-        //noinspection deprecation
         mAudioManager.setStreamMute(AudioManager.STREAM_SYSTEM, false);
         soundPool.release();
     }
@@ -131,7 +117,7 @@ public class MainActivity
         Log.e("request", newError.toString());
     }
 
-    void changeDisplay(String name, String loginName, String url, String count) {
+    protected void changeDisplay(String name, String loginName, String url, String count) {
         TextView nameTextView = (TextView)this.findViewById(R.id.name);
         TextView loginNameTextView = (TextView)this.findViewById(R.id.login_name);
         TextView countTextView = (TextView)this.findViewById(R.id.attendance_count);
@@ -141,59 +127,55 @@ public class MainActivity
         countTextView.setText("Your attendance: " + count);
     }
 
-    void inputStudentNumberManually() {
+    protected void inputAccessToken() {
+        final EditText editText = new EditText(MainActivity.this);
+        new AlertDialog
+            .Builder(this)
+            .setTitle("アクセストークン入力")
+            .setView(editText)
+            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    String accessToken = editText.getText().toString();
+                    mPortalClient = new PortalClient(MainActivity.this, MainActivity.this, accessToken);
+                }
+            })
+            .show();
+    }
+
+    protected void inputStudentNumberManually() {
         final EditText editText = new EditText(MainActivity.this);
         editText.setInputType(InputType.TYPE_CLASS_NUMBER);
         new AlertDialog
-                .Builder(MainActivity.this)
-                .setTitle("Input your student number.")
-                .setView(editText)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mPortalClient.createAttendance(editText.getText().toString());
-                    }
-                })
-                .show();
+            .Builder(MainActivity.this)
+            .setTitle("Input your student number.")
+            .setView(editText)
+            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    mPortalClient.createAttendance(editText.getText().toString());
+                }
+            })
+            .show();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            final EditText editText = new EditText(MainActivity.this);
-            new AlertDialog
-                    .Builder(MainActivity.this)
-                    .setTitle("アクセストークン入力")
-                    .setView(editText)
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            String accessToken = editText.getText().toString();
-                            mPortalClient = new PortalClient(MainActivity.this, MainActivity.this, accessToken);
-                        }
-                    })
-                    .show();
-            return true;
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                inputAccessToken();
+                return true;
+            case R.id.input_student_number:
+                inputStudentNumberManually();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
-
-        if (id == R.id.input_student_number) {
-            inputStudentNumberManually();
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 }
