@@ -79,4 +79,13 @@
         android:gravity="right"
         android:textSize="24sp" />
 
+    <ImageView
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:id="@+id/arch_logo"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:src="@raw/arch_logo"
+        android:scaleType="fitXY" />
+
 </RelativeLayout>
