@@ -13,6 +13,7 @@ import android.nfc.tech.NfcF;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -170,6 +171,22 @@ public class MainActivity extends AppCompatActivity {
         countTextView.setText("Your attendance: " + count);
     }
 
+    void inputStudentNumberManually() {
+        final EditText editText = new EditText(MainActivity.this);
+        editText.setInputType(InputType.TYPE_CLASS_NUMBER);
+        new AlertDialog
+                .Builder(MainActivity.this)
+                .setTitle("Input your student number.")
+                .setView(editText)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        request(editText.getText().toString());
+                    }
+                })
+                .show();
+    }
+
     String getStudentNumber(NfcF nfcF, byte[] IDm) throws IOException {
         byte[] res = new byte[0];
         try {
@@ -263,6 +280,10 @@ public class MainActivity extends AppCompatActivity {
                     })
                     .show();
             return true;
+        }
+
+        if (id == R.id.input_student_number) {
+            inputStudentNumberManually();
         }
 
         return super.onOptionsItemSelected(item);
