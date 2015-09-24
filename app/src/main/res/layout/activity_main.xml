@@ -52,13 +52,14 @@
         android:gravity="center_horizontal" />
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:id="@+id/login_name"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
-        android:textSize="50sp" />
+        android:textSize="50sp"
+        android:gravity="center_horizontal" />
 
     <ImageView
         android:layout_width="fill_parent"

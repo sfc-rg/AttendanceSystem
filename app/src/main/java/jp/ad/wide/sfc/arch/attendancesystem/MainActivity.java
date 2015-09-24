@@ -138,7 +138,8 @@ public class MainActivity extends AppCompatActivity {
                             String name = user.getString("name");
                             String nickname = user.getString("nickname");
                             String iconUrl = user.getString("icon_url");
-                            changeDisplay(name, nickname, iconUrl);
+                            String count = response.getString("attendance_count");
+                            changeDisplay(name, nickname, iconUrl, count);
                             soundPool.play(sucSoundId, 1.0f, 1.0f, 0, 0, 1.0f);
                         } catch (JSONException e) {
                             Log.e("request", response.toString());
@@ -158,13 +159,15 @@ public class MainActivity extends AppCompatActivity {
         AppController.getInstance().addToRequestQueue(jsonObjReq, tag_json_obj);
     }
 
-    void changeDisplay(String name, String loginName, String url) {
+    void changeDisplay(String name, String loginName, String url, String count) {
         url = url.replaceAll("\\\\", "");
         TextView nameTextView = (TextView)this.findViewById(R.id.name);
         TextView loginNameTextView = (TextView)this.findViewById(R.id.login_name);
+        TextView countTextView = (TextView)this.findViewById(R.id.attendance_count);
         //TODO 画像を取得する
         nameTextView.setText(name);
         loginNameTextView.setText(loginName);
+        countTextView.setText("Your attendance: " + count);
     }
 
     String getStudentNumber(NfcF nfcF, byte[] IDm) throws IOException {
