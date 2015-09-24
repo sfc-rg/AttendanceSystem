@@ -7,9 +7,6 @@ import android.content.Intent;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.SoundPool;
-import android.nfc.NfcAdapter;
-import android.nfc.Tag;
-import android.nfc.tech.NfcF;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -21,147 +18,120 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import jp.ad.wide.sfc.arch.attendancesystem.net.PortalClient;
+import jp.ad.wide.sfc.arch.attendancesystem.util.StudentCardReader;
 
-public class MainActivity extends AppCompatActivity {
-    protected NfcAdapter mNfcAdapter;
+public class MainActivity
+        extends AppCompatActivity
+        implements StudentCardReader.StudentCardListener, Response.Listener<JSONObject>, Response.ErrorListener {
+    private PortalClient mPortalClient;
+    private StudentCardReader mStudentReader;
+    private AudioManager mAudioManager;
     private SoundPool soundPool;
     private int sucSoundId, errSoundId;
-    private AudioManager audioManager;
-    private static final Object TAG_REQUEST_QUEUE = MainActivity.class.getName();
-    String tag_json_obj = "json_obj_req";
-    String accessToken = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
+        mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+        mStudentReader = new StudentCardReader(this, this);
 
-        //NFCが搭載されているかチェック
-        if (mNfcAdapter == null) {
-            //NFC非搭載の場合は通知
-            Toast.makeText(getApplicationContext(), getString(R.string.error_nfc_nosupport), Toast.LENGTH_SHORT).show();
+        if (!mStudentReader.isNfcInstalled()) {
+            Toast.makeText(getApplicationContext(), getString(R.string.error_nfc_nosupport), Toast.LENGTH_LONG).show();
             return;
         }
 
-        //NFCが有効かどうかチェック
-        if (!mNfcAdapter.isEnabled()) {
-            //NFCが無効の場合通知
+        if (!mStudentReader.isNfcEnabled()) {
             Toast.makeText(getApplicationContext(), getString(R.string.error_nfc_disable), Toast.LENGTH_LONG).show();
-            //設定画面へ飛ばす
             startActivity(new Intent(Settings.ACTION_NFC_SETTINGS));
         }
 
-        if (accessToken == null) {
-            final EditText editText = new EditText(MainActivity.this);
-            new AlertDialog
-                    .Builder(MainActivity.this)
-                    .setTitle("アクセストークン入力")
-                    .setView(editText)
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            accessToken = editText.getText().toString();
-                        }
-                    })
-                    .show();
-        }
+        final EditText editText = new EditText(MainActivity.this);
+        new AlertDialog
+                .Builder(MainActivity.this)
+                .setTitle("アクセストークン入力")
+                .setView(editText)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String accessToken = editText.getText().toString();
+                        mPortalClient = new PortalClient(MainActivity.this, MainActivity.this, accessToken);
+                    }
+                })
+                .show();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        mStudentReader.enable();
+        //noinspection deprecation
+        mAudioManager.setStreamMute(AudioManager.STREAM_SYSTEM, true);
 
-        //起動中のアクティビティが優先的にNFCを受け取れるように設定
-        mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
-        if (mNfcAdapter == null) {
-            return;
-        }
-        mNfcAdapter.enableReaderMode(this, new CustomReaderCallback(), NfcAdapter.FLAG_READER_NFC_F | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK, null);
-
-        audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
-        audioManager.setStreamMute(AudioManager.STREAM_SYSTEM, true);
-
-        AudioAttributes attributes = new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build();
+        AudioAttributes attributes = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build();
         soundPool = new SoundPool.Builder().setAudioAttributes(attributes).setMaxStreams(5).build();
         sucSoundId = soundPool.load(this, R.raw.suc, 1);
         errSoundId = soundPool.load(this, R.raw.err, 1);
     }
 
-    private class CustomReaderCallback implements NfcAdapter.ReaderCallback {
-        NfcF nfcF;
-        byte[] IDm;
-        @Override
-        public void onTagDiscovered(Tag tag) {
-            nfcF = NfcF.get(tag);
-            IDm = tag.getId();
-            String res = null;
-            try {
-                res = getStudentNumber(nfcF, IDm);
-                request(res);
-            } catch (IOException e) {
-                soundPool.stop(sucSoundId);
-                soundPool.play(errSoundId, 1.0f, 1.0f, 0, 0, 1.0f);
-                e.printStackTrace();
-            }
+    @Override
+    public void onPause() {
+        super.onPause();
+        mStudentReader.disable();
+        //noinspection deprecation
+        mAudioManager.setStreamMute(AudioManager.STREAM_SYSTEM, false);
+        soundPool.release();
+    }
+
+    @Override
+    public void onDiscovered(String studentNumber) {
+        mPortalClient.createAttendance(studentNumber);
+    }
+
+    @Override
+    public void onError(Exception exception) {
+        soundPool.play(errSoundId, 1.0f, 1.0f, 0, 0, 1.0f);
+    }
+
+    @Override
+    public void onResponse(JSONObject response) {
+        soundPool.play(sucSoundId, 1.0f, 1.0f, 0, 0, 1.0f);
+
+        try {
+            JSONObject user = response.getJSONObject("user");
+            String name = user.getString("name");
+            String nickname = user.getString("nickname");
+            String iconUrl = user.getString("icon_url");
+            String count = response.getString("attendance_count");
+            changeDisplay(name, nickname, iconUrl, count);
+        } catch (JSONException e) {
+            Log.e("request", response.toString());
+            e.printStackTrace();
         }
     }
 
-    private void request(String studentNumber) {
-        Log.d("request", "studentNumber: " + studentNumber);
-        String URL_API = "http://portal.gw.sfc.wide.ad.jp/api/v1/attendances";
-        //https にしたほうがいい
-        JSONObject json = new JSONObject();
-        try {
-            json.put("access_token", accessToken);
-            json.put("student_id", studentNumber);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+    @Override
+    public void onErrorResponse(VolleyError error) {
+        soundPool.play(errSoundId, 1.0f, 1.0f, 0, 0, 1.0f);
 
-        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.POST, URL_API, json,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            JSONObject user = response.getJSONObject("user");
-                            String name = user.getString("name");
-                            String nickname = user.getString("nickname");
-                            String iconUrl = user.getString("icon_url");
-                            String count = response.getString("attendance_count");
-                            changeDisplay(name, nickname, iconUrl, count);
-                            soundPool.play(sucSoundId, 1.0f, 1.0f, 0, 0, 1.0f);
-                        } catch (JSONException e) {
-                            Log.e("request", response.toString());
-                            e.printStackTrace();
-                        }
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        VolleyError newError = new VolleyError(new String(error.networkResponse.data));
-                        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
-                        alertDialogBuilder.setTitle("Error").setMessage(new String(error.networkResponse.data)).show();
-                        Log.e("request", newError.toString());
-                    }
-                });
-        AppController.getInstance().addToRequestQueue(jsonObjReq, tag_json_obj);
+        VolleyError newError = new VolleyError(new String(error.networkResponse.data));
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+        alertDialogBuilder.setTitle("Error").setMessage(new String(error.networkResponse.data)).show();
+        Log.e("request", newError.toString());
     }
 
     void changeDisplay(String name, String loginName, String url, String count) {
-        url = url.replaceAll("\\\\", "");
         TextView nameTextView = (TextView)this.findViewById(R.id.name);
         TextView loginNameTextView = (TextView)this.findViewById(R.id.login_name);
         TextView countTextView = (TextView)this.findViewById(R.id.attendance_count);
@@ -181,74 +151,10 @@ public class MainActivity extends AppCompatActivity {
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        request(editText.getText().toString());
+                        mPortalClient.createAttendance(editText.getText().toString());
                     }
                 })
                 .show();
-    }
-
-    String getStudentNumber(NfcF nfcF, byte[] IDm) throws IOException {
-        byte[] res = new byte[0];
-        try {
-            res = readWithoutEncryption(nfcF, IDm);
-        } catch (IOException e) {
-            Log.e("nfc", e.getMessage(), e);
-            e.printStackTrace();
-        }
-        if (res == null) return null;
-        byte[] numberCodes = new byte[]{res[13], res[14], res[15], res[16], res[17], res[18], res[19], res[20]};
-        return new String(numberCodes, "US-ASCII");
-
-    }
-
-    byte[] readWithoutEncryption(NfcF nfcF, byte[] IDm) throws IOException {
-
-        ByteArrayOutputStream bout = new ByteArrayOutputStream(100);
-        byte[] res = new byte[]{0};
-
-        //size of send data
-        bout.write(0x10);
-
-        /**********************
-         * command packet data
-         **********************
-         * command code         0x06(Read Without Encryption)
-         * idm
-         * number of services   0x01
-         * service code list    0x0B11
-         * number of blocks     0x01
-         */
-        bout.write(0x06);
-        bout.write(IDm);
-        bout.write(0x01);
-        bout.write(0x0B);
-        bout.write(0x11);
-        bout.write(0x01);
-
-        /***********************
-         *  block list element
-         ***********************
-         * b1       2 bytes block list element
-         * b000     access mode
-         * b1001    service code list order
-         * -> b1000 1001 = 0x8001
-         */
-        bout.write(0x80);
-        bout.write(0x01);
-
-        byte[] msg = bout.toByteArray();
-
-        try {
-            nfcF.connect();
-            res = nfcF.transceive(msg);
-            nfcF.close();
-        } catch (IOException e) {
-            Log.e("nfc", e.getMessage(), e);
-            e.printStackTrace();
-            return null;
-        }
-
-        return res;
     }
 
     @Override
@@ -275,7 +181,8 @@ public class MainActivity extends AppCompatActivity {
                     .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            accessToken = editText.getText().toString();
+                            String accessToken = editText.getText().toString();
+                            mPortalClient = new PortalClient(MainActivity.this, MainActivity.this, accessToken);
                         }
                     })
                     .show();
@@ -284,16 +191,9 @@ public class MainActivity extends AppCompatActivity {
 
         if (id == R.id.input_student_number) {
             inputStudentNumberManually();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onPause() {
-        audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
-        soundPool.release();
-        audioManager.setStreamMute(AudioManager.STREAM_SYSTEM, false);
-        super.onPause();
     }
 }
