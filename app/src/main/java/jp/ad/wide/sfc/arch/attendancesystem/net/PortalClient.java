@@ -10,7 +10,7 @@ import org.json.JSONObject;
 import jp.ad.wide.sfc.arch.attendancesystem.AppController;
 
 public class PortalClient {
-    final static String API_V1_URL = "http://portal.gw.sfc.wide.ad.jp/api/v1";
+    final static String API_V1_URL = "https://portal.sfc.wide.ad.jp/api/v1";
     protected String mAccessToken;
     protected Response.Listener<JSONObject> mSuccessListener;
     protected Response.ErrorListener mErrorListener;
