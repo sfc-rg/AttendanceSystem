@@ -14,7 +14,7 @@ class AppController : Application() {
 
     private val requestQueue by lazy { Volley.newRequestQueue(applicationContext) }
 
-    fun <T> addToRequestQueue(req: JsonObjectRequest, tag: String?) {
+    fun addToRequestQueue(req: JsonObjectRequest, tag: String?) {
         // set the default tag if tag is empty
         req.tag = if (tag.isNullOrEmpty()) TAG else tag
         requestQueue.add(req)
