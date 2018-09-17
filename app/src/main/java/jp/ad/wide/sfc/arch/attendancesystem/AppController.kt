@@ -1,56 +1,31 @@
-package jp.ad.wide.sfc.arch.attendancesystem;
+package jp.ad.wide.sfc.arch.attendancesystem
 
-import android.app.Application;
-import android.text.TextUtils;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
+import android.app.Application
+import com.android.volley.Request
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
 
 /**
  * AppController
  */
-public class AppController extends Application {
+class AppController : Application() {
 
-    public static final String TAG = AppController.class
-            .getSimpleName();
+    private val TAG: String = AppController::class.java.simpleName
 
-    private RequestQueue mRequestQueue;
+    private val requestQueue by lazy { Volley.newRequestQueue(applicationContext) }
 
-    private static AppController mInstance;
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        mInstance = this;
-    }
-
-    public static synchronized AppController getInstance() {
-        return mInstance;
-    }
-
-    public RequestQueue getRequestQueue() {
-        if (mRequestQueue == null) {
-            mRequestQueue = Volley.newRequestQueue(getApplicationContext());
-        }
-        return mRequestQueue;
-    }
-
-
-    public <T> void addToRequestQueue(JsonObjectRequest req, String tag) {
+    fun <T> addToRequestQueue(req: JsonObjectRequest, tag: String?) {
         // set the default tag if tag is empty
-        req.setTag(TextUtils.isEmpty(tag) ? TAG : tag);
-        getRequestQueue().add(req);
+        req.tag = if (tag.isNullOrEmpty()) TAG else tag
+        requestQueue.add(req)
     }
 
-    public <T> void addToRequestQueue(Request<T> req) {
-        req.setTag(TAG);
-        getRequestQueue().add(req);
+    fun <T> addToRequestQueue(req: Request<T>) {
+        req.tag = TAG
+        requestQueue.add(req)
     }
 
-    public void cancelPendingRequests(Object tag) {
-        if (mRequestQueue != null) {
-            mRequestQueue.cancelAll(tag);
-        }
+    fun cancelPendingRequests(tag: Any) {
+        requestQueue?.cancelAll(tag)
     }
 }

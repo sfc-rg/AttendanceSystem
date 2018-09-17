@@ -146,7 +146,7 @@ class MainActivity : AppCompatActivity(), StudentCardReader.StudentCardListener,
             .setView(editText)
             .setPositiveButton("OK") { _, _ ->
                 val accessToken = editText.text.toString()
-                portalClient = PortalClient(this, this, accessToken)
+                portalClient = PortalClient(application as AppController, this, this, accessToken)
             }
             .show()
     }

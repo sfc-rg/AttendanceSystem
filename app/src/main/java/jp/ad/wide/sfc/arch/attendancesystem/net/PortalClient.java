@@ -15,10 +15,13 @@ public class PortalClient {
     protected Response.Listener<JSONObject> mSuccessListener;
     protected Response.ErrorListener mErrorListener;
 
-    public PortalClient(Response.Listener<JSONObject> successListener, Response.ErrorListener errorListener, String accessToken) {
+    private AppController appController;
+
+    public PortalClient(AppController appController, Response.Listener<JSONObject> successListener, Response.ErrorListener errorListener, String accessToken) {
         mSuccessListener = successListener;
         mErrorListener = errorListener;
         mAccessToken = accessToken;
+        this.appController = appController;
     }
 
     public void createAttendance(String studentNumber) {
@@ -32,6 +35,6 @@ public class PortalClient {
 
         JsonObjectRequest jsonObjReq = new JsonObjectRequest(
                 Request.Method.POST, API_V1_URL + "/attendances", parameters, mSuccessListener, mErrorListener);
-        AppController.getInstance().addToRequestQueue(jsonObjReq, "/attendances");
+        appController.addToRequestQueue(jsonObjReq, "/attendances");
     }
 }
