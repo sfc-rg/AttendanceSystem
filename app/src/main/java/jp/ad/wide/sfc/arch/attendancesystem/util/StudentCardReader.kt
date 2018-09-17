@@ -1,112 +1,113 @@
-package jp.ad.wide.sfc.arch.attendancesystem.util;
+package jp.ad.wide.sfc.arch.attendancesystem.util
 
-import android.app.Activity;
-import android.nfc.NfcAdapter;
-import android.nfc.Tag;
-import android.nfc.tech.NfcF;
-import android.util.Log;
+import android.app.Activity
+import android.nfc.NfcAdapter
+import android.nfc.Tag
+import android.nfc.tech.NfcF
+import android.util.Log
+import java.io.ByteArrayOutputStream
+import java.io.IOException
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+class StudentCardReader(
+    private val activity: Activity,
+    private val listener: StudentCardListener
+) : NfcAdapter.ReaderCallback {
+    private val nfcAdapter: NfcAdapter = NfcAdapter.getDefaultAdapter(activity)
 
-public class StudentCardReader implements NfcAdapter.ReaderCallback {
-    protected Activity mActivity;
-    protected NfcAdapter mNfcAdapter;
-    protected StudentCardListener mListener;
+    val isNfcInstalled = true
+    val isNfcEnabled = nfcAdapter.isEnabled
 
-    public StudentCardReader(Activity activity, StudentCardListener listener) {
-        mActivity = activity;
-        mNfcAdapter = NfcAdapter.getDefaultAdapter(mActivity);
-        mListener = listener;
+    fun enable() {
+        nfcAdapter.enableReaderMode(
+            activity,
+            this,
+            NfcAdapter.FLAG_READER_NFC_F or NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK,
+            null
+        )
     }
 
-    public void enable() {
-        if (mActivity == null) return;
-        mNfcAdapter.enableReaderMode(mActivity, this, NfcAdapter.FLAG_READER_NFC_F | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK, null);
+    fun disable() {
+        nfcAdapter.disableReaderMode(activity)
     }
 
-    public void disable() {
-        if (mActivity == null) return;
-        mNfcAdapter.disableReaderMode(mActivity);
-    }
-
-    public boolean isNfcInstalled() {
-        return mActivity != null;
-    }
-
-    public boolean isNfcEnabled() {
-        return mActivity != null && mNfcAdapter.isEnabled();
-    }
-
-    @Override
-    public void onTagDiscovered(Tag tag) {
-        NfcF nfcF = NfcF.get(tag);
-        byte[] IDm = tag.getId();
+    override fun onTagDiscovered(tag: Tag) {
+        val nfcF = NfcF.get(tag)
+        val iDm = tag.id
         try {
-            String studentNumber = getStudentNumber(nfcF, IDm);
-            mListener.onDiscovered(studentNumber);
-        } catch (IOException e) {
-            mListener.onError(e);
+            val studentNumber = getStudentNumber(nfcF, iDm)
+            if (studentNumber != null) {
+                listener.onDiscovered(studentNumber)
+            } else {
+                val exception = NullPointerException("Student number is null")
+                listener.onError(exception)
+            }
+        } catch (e: IOException) {
+            listener.onError(e)
         }
     }
 
-    String getStudentNumber(NfcF nfcF, byte[] IDm) throws IOException {
-        byte[] res = new byte[0];
+    @Throws(IOException::class)
+    private fun getStudentNumber(nfcF: NfcF, IDm: ByteArray): String? {
+        val res: ByteArray
         try {
-            res = readWithoutEncryption(nfcF, IDm);
-        } catch (IOException e) {
-            Log.e("nfc", e.getMessage(), e);
-            e.printStackTrace();
+            res = readWithoutEncryption(nfcF, IDm)
+        } catch (e: IOException) {
+            Log.e("nfc", e.message, e)
+            listener.onError(e)
+            return null
         }
-        if (res == null) return null;
-        byte[] numberCodes = new byte[]{res[13], res[14], res[15], res[16], res[17], res[18], res[19], res[20]};
-        return new String(numberCodes, "US-ASCII");
+
+        val numberCodes = res.copyOfRange(13, 21)
+        return String(numberCodes, Charsets.US_ASCII)
     }
 
-    byte[] readWithoutEncryption(NfcF nfcF, byte[] IDm) throws IOException {
-        ByteArrayOutputStream bout = new ByteArrayOutputStream(100);
-        byte[] res;
+    @Throws(IOException::class)
+    private fun readWithoutEncryption(nfcF: NfcF, iDm: ByteArray): ByteArray {
+        val bout = ByteArrayOutputStream(100)
+        val res: ByteArray
 
-        //size of send data
-        bout.write(0x10);
+        bout.apply {
+            //size of send data
+            write(0x10)
 
-        /**********************
-         * command packet data
-         **********************
-         * command code         0x06(Read Without Encryption)
-         * idm
-         * number of services   0x01
-         * service code list    0x0B11
-         * number of blocks     0x01
-         */
-        bout.write(0x06);
-        bout.write(IDm);
-        bout.write(0x01);
-        bout.write(0x0B);
-        bout.write(0x11);
-        bout.write(0x01);
+            /**********************
+             * command packet data
+             *
+             * command code         0x06(Read Without Encryption)
+             * idm
+             * number of services   0x01
+             * service code list    0x0B11
+             * number of blocks     0x01
+             */
+            write(0x06)
+            write(iDm)
+            write(0x01)
+            write(0x0B)
+            write(0x11)
+            write(0x01)
 
-        /***********************
-         *  block list element
-         ***********************
-         * b1       2 bytes block list element
-         * b000     access mode
-         * b1001    service code list order
-         * -> b1000 1001 = 0x8001
-         */
-        bout.write(0x80);
-        bout.write(0x01);
+            /***********************
+             * block list element
+             *
+             * b1       2 bytes block list element
+             * b000     access mode
+             * b1001    service code list order
+             * -> b1000 1001 = 0x8001
+             */
+            write(0x80)
+            write(0x01)
+        }
 
-        byte[] msg = bout.toByteArray();
-        nfcF.connect();
-        res = nfcF.transceive(msg);
-        nfcF.close();
+        val msg = bout.toByteArray()
+        nfcF.connect()
+        res = nfcF.transceive(msg)
+        nfcF.close()
 
-        return res;
+        return res
     }
 
-    public interface StudentCardListener {
-        void onDiscovered(String studentNumber);
-        void onError(Exception exception);
+    interface StudentCardListener {
+        fun onDiscovered(studentNumber: String)
+        fun onError(exception: Exception)
     }
 }
