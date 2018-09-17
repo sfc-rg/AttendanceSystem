@@ -35,6 +35,7 @@ public class MainActivity
     private AudioManager mAudioManager;
     private SoundPool soundPool;
     private int sucSoundId, errSoundId;
+    private String lastScannedStudentNumber;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +44,8 @@ public class MainActivity
 
         mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
         mStudentReader = new StudentCardReader(this, this);
+
+        lastScannedStudentNumber = "00000000";
 
         if (!mStudentReader.isNfcInstalled()) {
             Toast.makeText(getApplicationContext(), getString(R.string.error_nfc_nosupport), Toast.LENGTH_LONG).show();
@@ -82,7 +85,11 @@ public class MainActivity
 
     @Override
     public void onDiscovered(String studentNumber) {
+        if (studentNumber.equals(lastScannedStudentNumber)) {
+            return;
+        }
         mPortalClient.createAttendance(studentNumber);
+        lastScannedStudentNumber = studentNumber;
     }
 
     @Override
